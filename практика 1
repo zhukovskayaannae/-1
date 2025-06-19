@@ -1,0 +1,53 @@
+class CalculatorModel {
+public double evaluate(String expression) {
+try {
+// Используем Java Script Engine для вычисления выражений
+ScriptEngineManager manager = new ScriptEngineManager();
+ScriptEngine engine = manager.getEngineByName("JavaScript");
+return (double) engine.eval(expression);
+} catch (Exception e) {
+throw new RuntimeException("Ошибка при вычислении выражения: " + e.getMessage());
+}
+}
+}
+
+// View
+class CalculatorView {
+public void displayResult(double result) {
+System.out.println("Результат: " + result);
+}
+
+public String getUserInput() {
+Scanner scanner = new Scanner(System.in);
+System.out.print("Введите математическое выражение: ");
+return scanner.nextLine();
+}
+}
+
+// Controller
+class CalculatorController {
+private CalculatorModel model;
+private CalculatorView view;
+
+public CalculatorController(CalculatorModel model, CalculatorView view) {
+this.model = model;
+this.view = view;
+}
+
+public void processUserInput() {
+String expression = view.getUserInput();
+double result = model.evaluate(expression);
+view.displayResult(result);
+}
+}
+
+// Основной класс
+public class CalculatorApp {
+public static void main(String[] args) {
+CalculatorModel model = new CalculatorModel();
+CalculatorView view = new CalculatorView();
+CalculatorController controller = new CalculatorController(model, view);
+
+controller.processUserInput();
+}
+}
