@@ -1,0 +1,192 @@
+public class User {
+private String name;
+private String role; // "Admin", "CEC", "Candidate", "User"
+private String login;
+private String password;
+
+// Конструкторы, геттеры и сеттеры
+}
+
+#### CEC.java
+java
+public class CEC {
+private String login;
+private String password;
+
+// Конструкторы, геттеры и сеттеры
+}
+
+#### Candidate.java
+java
+public class Candidate {
+private String name;
+private String party;
+private String login;
+private String password;
+
+// Конструкторы, геттеры и сеттеры
+}
+
+#### Voting.java
+java
+import java.util.Date;
+
+public class Voting {
+private String title;
+private Date endDate;
+private List<Candidate> candidates;
+private List<String> results;
+
+// Конструкторы, геттеры и сеттеры
+
+public void addCandidate(Candidate candidate) {
+candidates.add(candidate);
+}
+
+public void castVote(String candidateName) {
+results.add(candidateName);
+}
+}
+
+### Сервисы
+
+#### UserService.java
+java
+import java.util.List;
+
+public class UserService {
+private List<User> users;
+
+public void registerUser(User user) {
+users.add(user);
+}
+
+public void deleteUser(String login) {
+// Логика удаления пользователя
+}
+
+public List<User> getUsers() {
+return this.users;
+}
+}
+
+#### CECService.java
+java
+import java.util.List;
+
+public class CECService {
+private List<CEC> cecs;
+
+public void createCEC(CEC cec) {
+cecs.add(cec);
+}
+
+public void deleteCEC(String login) {
+// Логика удаления ЦИК
+}
+
+public List<CEC> getCECs() {
+return cecs;
+}
+}
+
+#### VotingService.java
+java
+import java.util.List;
+
+public class VotingService {
+private List<Voting> votings;
+
+public void createVoting(Voting voting) {
+votings.add(voting);
+}
+
+public void printResults(Voting voting) {
+// Логика для печати результатов
+}
+}
+
+### Контроллеры
+
+#### MainController.java
+java
+import java.util.Scanner;
+
+public class MainController {
+private UserService userService;
+private CECService cecService;
+private VotingService votingService;
+
+public MainController(UserService userService, CECService cecService, VotingService votingService) {
+this.userService = userService;
+this.cecService = cecService;
+this.votingService = votingService;
+}
+
+public void handleUserLogin(User user) {
+switch (user.getRole()) {
+case "Admin":
+adminMenu();
+break;
+case "CEC":
+cecMenu();
+break;
+case "Candidate":
+candidateMenu();
+break;
+case "User":
+userMenu();
+break;
+}
+}
+
+private void adminMenu() {
+// Логика для администратора
+}
+
+private void cecMenu() {
+// Логика для ЦИК
+}
+
+private void candidateMenu() {
+// Логика для кандидата
+}
+
+private void userMenu() {
+// Логика для пользователя
+}
+}
+
+### Утилиты для работы с файлами
+
+#### FileUtils.java
+java
+import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
+
+public class FileUtils {
+public static void exportResultsToFile(String content, String directory, String fileName) throws IOException {
+File file = new File(directory, fileName);
+
+try (FileWriter writer = new FileWriter(file)) {
+writer.write(content);
+}
+}
+}
+
+### Основной класс приложения
+
+#### VotingApp.java
+java
+public class VotingApp {
+public static void main(String[] args) {
+UserService userService = new UserService();
+CECService cecService = new CECService();
+VotingService votingService = new VotingService();
+MainController mainController = new MainController(userService, cecService, votingService);
+
+// Запуск приложения
+// Логика для входа пользователя и вызов mainController.handleUserLogin(user);
+}
+}
