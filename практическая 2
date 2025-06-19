@@ -1,0 +1,93 @@
+import javax.script.ScriptEngine;
+import javax.script.ScriptEngineManager;
+
+class CalculatorModel {
+// Метод для вычисления выражения
+public double evaluate(String expression) {
+if (!isValidExpression(expression)) {
+throw new RuntimeException("Некорректное выражение: проверьте скобки и символы.");
+}
+try {
+expression = preprocessExpression(expression);
+ScriptEngineManager manager = new ScriptEngineManager();
+ScriptEngine engine = manager.getEngineByName("JavaScript");
+return (double) engine.eval(expression);
+} catch (Exception e) {
+throw new RuntimeException("Ошибка при вычислении выражения: " + e.getMessage());
+}
+}
+
+// Проверка корректности выражения (скобки)
+private boolean isValidExpression(String expression) {
+int balance = 0;
+for (char ch : expression.toCharArray()) {
+if (ch == '(') balance++;
+else if (ch == ')') balance--;
+if (balance < 0) return false;
+}
+return balance == 0;
+}
+
+// Замена функций на SQL-эквиваленты, чтобы был корректный синтаксис
+private String preprocessExpression(String expression) {
+// К примеру, заменим log и exp на соответствующие JavaScript функции
+expression = expression.replaceAll("log\\(", "Math.log2(");
+expression = expression.replaceAll("exp\\(", "Math.exp(");
+expression = expression.replaceAll("\\^", "");
+expression = expression.replaceAll("!(\\d+)", factorial("$1")); // Замена на факториал
+return expression;
+}
+
+// Функция факториала
+private String factorial(String number) {
+return "factorial(" + number + ")";
+}
+
+// Пример реализации факториала. В JavaScript необходимо определить функцию 'factorial'
+private String getFactorialFunction() {
+return "function factorial(n) { return n <= 1 ? 1 : n * factorial(n - 1); }";
+}
+}
+
+// View
+class CalculatorView {
+public void displayResult(double result) {
+System.out.println("Результат: " + result);
+}
+
+public String getUserInput() {
+Scanner scanner = new Scanner(System.in);
+System.out.print("Введите математическое выражение: ");
+return scanner.nextLine();
+}
+}
+
+// Controller
+class CalculatorController {
+private CalculatorModel model;
+private CalculatorView view;
+
+public CalculatorController(CalculatorModel model, CalculatorView view) {
+this.model = model;
+this.view = view;
+}
+
+public void processUserInput() {
+String expression = view.getUserInput();
+double result = model.evaluate(expression); // Здесь будет обработка выражения
+view.displayResult(result);
+}
+}
+
+// Основной класс
+public class CalculatorApp {
+public static void main(String[] args) {
+CalculatorModel model = new CalculatorModel();
+CalculatorView view = new CalculatorView();
+CalculatorController controller = new CalculatorController(model, view);
+
+// Вывод функции в JavaScript
+System.out.println(model.getFactorialFunction());
+controller.processUserInput();
+}
+}
