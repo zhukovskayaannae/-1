@@ -1,0 +1,184 @@
+class DataEntity {
+private int id;
+private String data;
+private boolean readOnly;
+
+// Конструкторы, геттеры и сеттеры
+}
+
+
+#### 2. Интерфейс Репозитория
+java
+import java.util.List;
+
+interface DataRepository {
+DataEntity findById(int id);
+List<DataEntity> findAll();
+void save(DataEntity entity);
+void delete(int id);
+}
+
+#### 3. Реализация Репозитория
+java
+import java.sql.*;
+import java.util.ArrayList;
+import java.util.List;
+
+class DatabaseDataRepository implements DataRepository {
+private Connection connection;
+
+public DatabaseDataRepository(Connection connection) {
+this.connection = connection;
+}
+
+@Override
+public DataEntity findById(int id) {
+try (PreparedStatement statement = connection.prepareStatement("SELECT * FROM data WHERE id = ?")) {
+statement.setInt(1, id);
+ResultSet resultSet = statement.executeQuery();
+if (resultSet.next()) {
+return mapRowToDataEntity(resultSet);
+}
+} catch (SQLException e) {
+e.printStackTrace();
+}
+return null;
+}
+
+@Override
+public List<DataEntity> findAll() {
+List<DataEntity> entities = new ArrayList<>();
+try (Statement statement = connection.createStatement()) {
+ResultSet resultSet = statement.executeQuery("SELECT * FROM data");
+while (resultSet.next()) {
+entities.add(mapRowToDataEntity(resultSet));
+}
+} catch (SQLException e) {
+e.printStackTrace();
+}
+return entities;
+}
+
+@Override
+public void save(DataEntity entity) {
+try (PreparedStatement statement = connection.prepareStatement("INSERT INTO data (data, read_only) VALUES (?, ?)")) {
+statement.setString(1, entity.getData());
+statement.setBoolean(2, entity.isReadOnly());
+statement.executeUpdate();
+} catch (SQLException e) {
+e.printStackTrace();
+}
+}
+
+@Override
+public void delete(int id) {
+try (PreparedStatement statement = connection.prepareStatement("DELETE FROM data WHERE id = ?")) {
+statement.setInt(1, id);
+statement.executeUpdate();
+} catch (SQLException e) {
+e.printStackTrace();
+}
+}
+
+private DataEntity mapRowToDataEntity(ResultSet resultSet) throws SQLException {
+DataEntity entity = new DataEntity();
+entity.setId(resultSet.getInt("id"));
+entity.setData(resultSet.getString("data"));
+entity.setReadOnly(resultSet.getBoolean("read_only"));
+return entity;
+}
+}
+
+#### 4. Сервис для обработки кэширования
+java
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+class DataService {
+private DataRepository repository;
+private Map<Integer, DataEntity> cache = new HashMap<>();
+
+public DataService(DataRepository repository) {
+this.repository = repository;
+}
+
+public DataEntity getData(int id) {
+if(cache.containsKey(id)) {
+return cache.get(id);
+}
+
+DataEntity entity = repository.findById(id);
+if(entity != null && entity.isReadOnly()) {
+cache.put(id, entity);
+}
+return entity;
+}
+
+public void saveData(DataEntity entity) {
+repository.save(entity);
+if(entity.isReadOnly()) {
+cache.put(entity.getId(), entity);
+}
+}
+
+public void deleteData(int id) {
+repository.delete(id);
+cache.remove(id);
+}
+
+public List<DataEntity> getAllData() {
+return repository.findAll();
+}
+}
+
+#### 5. API-класс
+java
+public class DataApiController {
+private DataService dataService;
+
+public DataApiController(DataService dataService) {
+this.dataService = dataService;
+}
+
+public DataEntity getData(int id) {
+return dataService.getData(id);
+}
+
+public void saveData(DataEntity entity) {
+dataService.saveData(entity);
+}
+
+public void deleteData(int id) {
+dataService.deleteData(id);
+}
+}
+
+### Пример использования
+java
+import java.sql.Connection;
+import java.sql.DriverManager;
+
+public class Main {
+public static void main(String[] args) {
+try {
+Connection connection = DriverManager.getConnection("jdbc:mysql://localhost:3306/yourdbname", "username", "password");
+
+DataRepository repository = new DatabaseDataRepository(connection);
+DataService dataService = new DataService(repository);
+DataApiController apiController = new DataApiController(dataService);
+
+// Пример работы с API
+DataEntity newData = new DataEntity();
+newData.setData("Sample Data");
+newData.setReadOnly(true);
+apiController.saveData(newData);
+
+DataEntity fetchedData = apiController.getData(newData.getId());
+System.out.println("Fetched Data: " + fetchedData.getData());
+
+} catch (SQLException e) {
+e.printStackTrace();
+}
+}
+}
